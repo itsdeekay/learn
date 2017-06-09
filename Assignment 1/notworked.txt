@@ -1,0 +1,94 @@
+    
+def prun(model,X,Y,Xtest,Ytest,s):
+    global leaf_node
+    temp_nodes = leaf_node
+    temp_nodes.reverse()
+    for i in temp_nodes:
+        left = i.parent.left_node
+        right = i.parent.right_node
+        i.parent.left_node = None
+        i.parent.right_node = None
+        temp = model.score(Xtest,Ytest)
+        temp = int((temp * 1000) + 0.05) / 1000.0
+        if temp>=s:
+            leaf_node.insert(0,i.parent)
+            continue
+        else:
+            i.parent.left_node = left
+            i.parent.right_node = right
+            leaf_node.pop()
+    if len(leaf_node)>0:
+        prun(model,X,Y,Xtest,Ytest,s)
+        
+        
+def prune(self,model,X,Y,Xtest,Ytest,s):
+        global new_nodes
+        if self.attr is not None and self.split is not None:
+            while self.left_node is not None:
+                new_nodes += 1
+                left_idx = (X[:, self.attr] < self.split)
+                Xleft = X[left_idx]
+                Yleft = Y[left_idx]
+                self.value = np.round(Yleft.mean())
+                left = self.left_node.left_node
+                right = self.left_node.right_node
+                self.left_node.left_node = None
+                self.left_node.right_node = None
+                temp = model.score(Xtest,Ytest)
+                temp = int((temp * 10000) + 0.005) / 10000.0
+                if temp>=s:
+                    break
+                else:
+                    self.left_node.left_node = left
+                    self.left_node.right_node = right
+                    self.prune(model,Xleft,Yleft,Xtest,Ytest,s)
+                    
+            while self.right_node is not None:
+                new_nodes += 1
+                right_idx = (X[:, self.attr] >= self.split)
+                Xright = X[right_idx]
+                Yright = Y[right_idx]
+                self.value = np.round(Yright.mean())
+                left = self.right_node.left_node
+                right = self.right_node.right_node
+                self.right_node.left_node = None
+                self.right_node.right_node = None
+                temp = model.score(Xtest,Ytest)
+                temp = int((temp * 10000) + 0.005) / 10000.0
+                if temp>=s:
+                    break
+                else:
+                    self.right_node.left_node = left
+                    self.right_node.right_node = right
+                    self.prune(model,Xright,Yright,Xtest,Ytest,s)
+                    
+                    
+def prun(model,X,Y,Xtest,Ytest):
+    global leaf_node,s1
+    for i in leaf_node:
+        left_t = copy(i.parent.left_node)
+        right_t = copy(i.parent.right_node)
+        i.parent.left_node = None
+        i.parent.right_node = None
+        temp = model.score(Xtest,Ytest)
+        temp = int((temp * 1000) + 0.05) / 1000.0
+        if temp>=s1:
+            s1 = temp
+            leaf_node.append(i.parent)
+            print 'After Inserting: ',len(leaf_node)
+            if len(leaf_node)>=2:           
+                leaf_node.pop(0)
+                leaf_node.pop(0)
+            else:
+                leaf_node.pop(0)
+            print 'After popping in IF block', len(leaf_node)
+            continue
+        else:
+            i.parent.left_node = left_t
+            i.parent.right_node = right_t
+            if len(leaf_node)>=2:           
+                leaf_node.pop(0)
+                leaf_node.pop(0)
+            else:
+                leaf_node.pop(0)
+            print 'After popping in else Block: ',len(leaf_node)
